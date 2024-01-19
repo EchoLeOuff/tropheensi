@@ -37,6 +37,10 @@ do_image = pygame.transform.scale(do_image, (50, 50))
 re_image = pygame.image.load('assets/re.png')
 re_image = pygame.transform.scale(re_image, (50, 50))
 
+# Charger l'image pour le bouton "Supprimer"
+delete_image = pygame.image.load('assets/bin.png')
+delete_image = pygame.transform.scale(delete_image, (50, 50))
+
 # Position des boutons
 do_button_rect = do_image.get_rect()
 do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
@@ -44,8 +48,29 @@ do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
 re_button_rect = re_image.get_rect()
 re_button_rect.topleft = (resolution[0] - 100, resolution[1] - 80)
 
+delete_button_rect = delete_image.get_rect()
+delete_button_rect.topleft = (resolution[0] - 100, resolution[1] - 220)
+
 # Liste pour stocker les instances des boutons
 buttons = []
+
+# Liste pour stocker les instances des boutons placés dans la bande noire
+placed_buttons = []
+
+# Bande noire
+black_rect = pygame.Rect(0, resolution[1] - 50, resolution[0], 50)
+
+# Booléen pour savoir si le bouton est en cours de déplacement
+moving_button = None
+
+# Position initiale x pour les boutons dans la bande noire
+current_x = 200
+
+# Booléen pour savoir si le bouton est en cours de suppression
+deleting = False
+
+# Booléen pour savoir si un bouton est en cours de redimensionnement
+resizing_button = None
 
 # Boucle de jeu
 clock = pygame.time.Clock()
@@ -67,8 +92,9 @@ while True:
                 do_instance = pygame.sprite.Sprite()
                 do_instance.image = do_image
                 do_instance.rect = do_instance.image.get_rect()
-                do_instance.rect.topleft = (100, 100)  # Position du "Do"
+                do_instance.rect.topleft = mouse_pos
                 buttons.append(do_instance)
+                moving_button = do_instance  # Définir le bouton en cours de déplacement
 
             elif re_button_rect.collidepoint(mouse_pos):
                 print("Bouton Ré cliqué")
@@ -76,8 +102,47 @@ while True:
                 re_instance = pygame.sprite.Sprite()
                 re_instance.image = re_image
                 re_instance.rect = re_instance.image.get_rect()
-                re_instance.rect.topleft = (200, 100)  # Position du "Ré"
+                re_instance.rect.topleft = mouse_pos
                 buttons.append(re_instance)
+                moving_button = re_instance  # Définir le bouton en cours de déplacement
+
+            elif delete_button_rect.collidepoint(mouse_pos):
+                print("Bouton Supprimer cliqué")
+                deleting = True  # Activer le mode suppression
+
+            # Vérifier si le clic a eu lieu sur un bouton déjà placé dans la bande noire
+            for button in placed_buttons:
+                if button.rect.collidepoint(mouse_pos):
+                    print("Bouton placé cliqué")
+                    moving_button = button  # Définir le bouton en cours de déplacement
+
+        # Détecter le relâchement du clic de souris
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if moving_button:
+                # Vérifier si le bouton est dans la bande noire
+                if black_rect.colliderect(moving_button.rect):
+                    # Si le bouton en cours de déplacement est déjà dans la liste des boutons placés
+                    if moving_button in placed_buttons:
+                        placed_buttons.remove(moving_button)  # Le retirer de sa position précédente
+                    placed_buttons.append(moving_button)
+                    moving_button.rect.topleft = (current_x, black_rect.top)  # Aligner à la position x courante
+                    current_x += moving_button.rect.width + 10  # Espacement entre les boutons
+                else:
+                    print("Le bouton doit être placé dans la bande noire")
+                    moving_button.rect.topleft = (current_x, black_rect.top)  # Retourner à la position précédente
+                moving_button = None  # Réinitialiser le bouton en cours de déplacement
+
+            elif deleting:
+                # Supprimer toutes les instances de boutons placées
+                for button in placed_buttons:
+                    buttons.remove(button)
+                placed_buttons = []
+                print("Toutes les instances de blocs musicaux ont été supprimées")
+                deleting = False  # Désactiver le mode suppression
+                current_x = 200  # Réinitialiser la position x
+
+            elif resizing_button:
+                resizing_button = None  # Désactiver le mode redimensionnement
 
     # Déplacement du joueur
     keys = pygame.key.get_pressed()
@@ -107,15 +172,25 @@ while True:
     # Dessiner les boutons
     screen.blit(do_image, do_button_rect.topleft)
     screen.blit(re_image, re_button_rect.topleft)
+    screen.blit(delete_image, delete_button_rect.topleft)  # Dessiner l'image du bouton Supprimer
 
     # Dessiner la bande noire en bas
-    pygame.draw.rect(screen, BLACK, (0, resolution[1] - 50, resolution[0], 50))
+    pygame.draw.rect(screen, BLACK, black_rect)
+
+    # Dessiner les instances des boutons dans la bande noire
+    for button in placed_buttons:
+        screen.blit(button.image, button.rect.topleft)
+
+    # Dessiner le bouton en cours de déplacement
+    if moving_button:
+        mouse_pos = pygame.mouse.get_pos()
+        moving_button.rect.topleft = mouse_pos
+        screen.blit(moving_button.image, moving_button.rect.topleft)
 
     # Dessiner les instances des boutons et suivre le curseur de la souris
     for button in buttons:
-        mouse_pos = pygame.mouse.get_pos()
-        button.rect.topleft = mouse_pos
-        screen.blit(button.image, button.rect.topleft)
+        if button != moving_button and button not in placed_buttons:
+            screen.blit(button.image, button.rect.topleft)
 
     # Mettre à jour l'écran
     pygame.display.flip()
