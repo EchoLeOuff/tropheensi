@@ -64,7 +64,7 @@ black_rect = pygame.Rect(0, resolution[1] - 50, resolution[0], 50)
 moving_button = None
 
 # Position initiale x pour les boutons dans la bande noire
-current_x = 200
+current_x = 10
 
 # Booléen pour savoir si le bouton est en cours de suppression
 deleting = False
@@ -121,25 +121,46 @@ while True:
             if moving_button:
                 # Vérifier si le bouton est dans la bande noire
                 if black_rect.colliderect(moving_button.rect):
-                    # Si le bouton en cours de déplacement est déjà dans la liste des boutons placés
-                    if moving_button in placed_buttons:
-                        placed_buttons.remove(moving_button)  # Le retirer de sa position précédente
-                    placed_buttons.append(moving_button)
-                    moving_button.rect.topleft = (current_x, black_rect.top)  # Aligner à la position x courante
-                    current_x += moving_button.rect.width + 10  # Espacement entre les boutons
+                    # Trouver la position d'insertion correcte
+                    insert_index = None
+                    for i, button in enumerate(placed_buttons):
+                        if moving_button.rect.centerx < button.rect.centerx:
+                            insert_index = i
+                            break
+                    if insert_index is not None:
+                        placed_buttons.insert(insert_index, moving_button)
+                    else:
+                        placed_buttons.append(moving_button)
+
+                    # Redécaler les boutons à droite du bouton déplacé
+                    current_x = 200
+                    for i in range(len(placed_buttons)):
+                        placed_buttons[i].rect.topleft = (current_x, black_rect.top)
+                        current_x += placed_buttons[i].rect.width + 10
+
+                    # Mettre à jour la position x courante
+                    current_x = current_x + 10
+
                 else:
                     print("Le bouton doit être placé dans la bande noire")
                     moving_button.rect.topleft = (current_x, black_rect.top)  # Retourner à la position précédente
+
+                # Supprimer le bouton de la liste buttons s'il appartient à cette liste
+                if moving_button in buttons:
+                    buttons.remove(moving_button)
+
                 moving_button = None  # Réinitialiser le bouton en cours de déplacement
 
             elif deleting:
                 # Supprimer toutes les instances de boutons placées
                 for button in placed_buttons:
-                    buttons.remove(button)
+                    # Supprimer le bouton de la liste buttons s'il appartient à cette liste
+                    if button in buttons:
+                        buttons.remove(button)
                 placed_buttons = []
                 print("Toutes les instances de blocs musicaux ont été supprimées")
                 deleting = False  # Désactiver le mode suppression
-                current_x = 200  # Réinitialiser la position x
+                current_x = 10  # Réinitialiser la position x
 
             elif resizing_button:
                 resizing_button = None  # Désactiver le mode redimensionnement
