@@ -1,4 +1,4 @@
-﻿import pygame
+import pygame
 import sys
 
 # Initialisation de Pygame
@@ -14,14 +14,15 @@ NOIR = (0, 0, 0)
 BLEU = (0, 0, 255)
 VERT = (0, 255, 0)
 
-# Paramètres du rectangle
+# Initialisation des paramètres du personnage
 rect_largeur, rect_hauteur = 50, 50
-rect_x, rect_y = largeur // 2, hauteur // 2
-vitesse = 5
-vitesse_saut = -10  # Vitesse négative pour aller vers le haut
+rect_x, rect_y = largeur // 2, hauteur - rect_hauteur
+vitesse_laterale = 0
+vitesse_saut = -10
+vitesse_verticale = 0
 gravite = 1
 saut_en_cours = False
-sol_y = hauteur - 70  # Position du sol
+sol_y = hauteur - 20
 
 class Obstacle:
     def __init__(self, x, y, largeur, hauteur, couleur):
@@ -38,6 +39,15 @@ class Obstacle:
 obstacles = []
 obstacles.append(Obstacle(300, sol_y - 50, 150, 25, (255, 0, 0)))  # Un obstacle rouge
 
+def est_au_dessus_obstacle(rect_personnage, obstacles):
+    for obstacle in obstacles:
+        if (obstacle.rect.left < rect_personnage.right and
+            obstacle.rect.right > rect_personnage.left and
+            obstacle.rect.top < rect_personnage.bottom + vitesse_verticale and
+            obstacle.rect.top > rect_personnage.bottom):
+            return True
+    return False
+
 # Boucle principale du jeu
 while True:
     for event in pygame.event.get():
@@ -45,12 +55,16 @@ while True:
             pygame.quit()
             sys.exit()
 
-    # Gestion des touches
+    # Gestion des touches pour les mouvements horizontaux
     touches = pygame.key.get_pressed()
     if touches[pygame.K_a]:
-        rect_x -= vitesse
-    if touches[pygame.K_d]:
-        rect_x += vitesse
+        vitesse_laterale = -5  # Déplacer vers la gauche
+    elif touches[pygame.K_d]:
+        vitesse_laterale = 5  # Déplacer vers la droite
+    else:
+        vitesse_laterale = 0  # Arrêter le mouvement latéral
+
+    rect_x += vitesse_laterale
 
     # Saut
     if not saut_en_cours and touches[pygame.K_SPACE]:
@@ -76,6 +90,47 @@ while True:
             rect_y = sol_y - rect_hauteur
             saut_en_cours = False
 
+    # Mise à jour du rectangle du personnage
+    rect_personnage = pygame.Rect(rect_x, rect_y, rect_largeur, rect_hauteur)
+
+
+    if est_au_dessus_obstacle(rect_personnage, obstacles):
+        vitesse_verticale = 0
+        rect_y = obstacle.rect.top - rect_hauteur
+        saut_en_cours = False
+    else:
+        vitesse_verticale += gravite
+        rect_y += vitesse_verticale
+
+    # Assurez-vous que le personnage ne passe pas sous le sol
+    if rect_y >= sol_y - rect_hauteur:
+        rect_y = sol_y - rect_hauteur
+        saut_en_cours = False
+        vitesse_verticale = 0
+
+    # Vérification des collisions avec les obstacles
+    sur_obstacle = False
+    for obstacle in obstacles:
+        if rect_personnage.colliderect(obstacle.rect):
+            # Gérer les collisions verticales
+            if rect_personnage.bottom <= obstacle.rect.top + vitesse_verticale and vitesse_verticale >= 0:
+                # Collision par le bas (le personnage atterrit sur l'obstacle)
+                rect_y = obstacle.rect.top - rect_hauteur
+                saut_en_cours = False
+                vitesse_verticale = 0
+            elif rect_personnage.top >= obstacle.rect.bottom - abs(vitesse_verticale) and vitesse_verticale < 0:
+                # Collision par le haut (le personnage heurte le bas de l'obstacle)
+                rect_y = obstacle.rect.bottom
+                vitesse_verticale = 0
+
+            # Collision horizontale
+            if rect_x + rect_largeur > obstacle.rect.left and rect_personnage.left < obstacle.rect.left:
+                # Collision à droite de l'obstacle
+                rect_x = obstacle.rect.left - rect_largeur
+            elif rect_personnage.right > obstacle.rect.right and rect_x < obstacle.rect.right:
+                # Collision à gauche de l'obstacle
+                rect_x = obstacle.rect.right
+
     # Mise à jour de l'écran
     ecran.fill(NOIR)
     pygame.draw.rect(ecran, BLEU, (rect_x, rect_y, rect_largeur, rect_hauteur))
@@ -84,5 +139,3 @@ while True:
         obstacle.afficher(ecran)
     pygame.display.flip()
     pygame.time.Clock().tick(60)  # Limite à 60 FPS
-
-
