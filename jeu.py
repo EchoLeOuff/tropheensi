@@ -1,4 +1,4 @@
-﻿import pygame
+import pygame
 import sys
 
 # Initialisation de Pygame
@@ -78,6 +78,9 @@ clock = pygame.time.Clock()
 # Nouvelle variable pour suivre le déplacement du personnage
 movement_distance = 0
 
+# Liste pour stocker les mouvements associés aux blocs placés
+movement_sequence = []
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -147,17 +150,36 @@ while True:
             elif resizing_button:
                 resizing_button = None  # Désactiver le mode redimensionnement
 
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:  # Bouton gauche de la souris
+                mouse_pos = pygame.mouse.get_pos()
+                for button in placed_buttons:
+                    if button.rect.collidepoint(mouse_pos):
+                        if button.image == do_image:
+                            placed_buttons.append(do_image)
+                            movement_sequence.append(player_speed)
+                        elif button.image == re_image:
+                            placed_buttons.append(re_image)
+                            movement_sequence.append(-player_speed)
+
+    if movement_sequence:
+        movement_distance += movement_sequence[0]
+        if abs(movement_distance) >= 100:
+            movement_distance = 0
+            movement_sequence.pop(0)  # Retirer le premier élément de la séquence
+        player_rect.x += movement_sequence[0]
+
     for button in placed_buttons:
         if button.image == do_image:  # Si le bouton est "Do"
-            movement_distance += player_speed
+            movement_distance += 5
             if movement_distance >= 100:
                 movement_distance = 100
-            player_rect.x += player_speed
+            player_rect.x += 5
         elif button.image == re_image:  # Si le bouton est "Ré"
-            movement_distance -= player_speed
+            movement_distance -= 5
             if movement_distance <= -100:
                 movement_distance = -100
-            player_rect.x -= player_speed
+            player_rect.x -= 5
 
     # Déplacement du joueur
     keys = pygame.key.get_pressed()
