@@ -22,7 +22,7 @@ player_rect = player_image.get_rect()
 player_rect.center = (resolution[0] // 2, resolution[1] - player_rect.height - 50)  # 50 pixels au-dessus du bas
 
 # Définir la vitesse du joueur et la gravité pour le saut
-player_speed = 5
+player_speed = 10
 jump_speed = -10
 gravity = 1
 is_jumping = False
@@ -41,6 +41,10 @@ re_image = pygame.transform.scale(re_image, (50, 50))
 delete_image = pygame.image.load('assets/bin.png')
 delete_image = pygame.transform.scale(delete_image, (50, 50))
 
+# Charger l'image pour le bouton "Play"
+play_image = pygame.image.load('assets/play.png')
+play_image = pygame.transform.scale(play_image, (50, 50))
+
 # Position des boutons
 do_button_rect = do_image.get_rect()
 do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
@@ -50,6 +54,10 @@ re_button_rect.topleft = (resolution[0] - 100, resolution[1] - 80)
 
 delete_button_rect = delete_image.get_rect()
 delete_button_rect.topleft = (resolution[0] - 100, resolution[1] - 220)
+
+play_button_rect = play_image.get_rect()
+play_button_rect.topleft = (resolution[0] - 100, resolution[1] - 290)
+
 
 # Liste pour stocker les instances des boutons
 buttons = []
@@ -78,8 +86,11 @@ clock = pygame.time.Clock()
 # Nouvelle variable pour suivre le déplacement du personnage
 movement_distance = 0
 
-# Liste pour stocker les mouvements associés aux blocs placés
-movement_sequence = []
+# Booléen pour savoir si le bouton "Play" a été cliqué
+play_button_clicked = False
+
+# Boucle de jeu
+clock = pygame.time.Clock()
 
 while True:
     for event in pygame.event.get():
@@ -116,6 +127,11 @@ while True:
                 print("Bouton Supprimer cliqué")
                 deleting = True  # Activer le mode suppression
 
+            # Vérifier si le clic a eu lieu sur le bouton "Play"
+            elif play_button_rect.collidepoint(mouse_pos):
+                print("Bouton Play cliqué")
+                play_button_clicked = not play_button_clicked  # Inverser l'état du bouton "Play"
+
             # Vérifier si le clic a eu lieu sur un bouton déjà placé dans la bande noire
             for button in placed_buttons:
                 if button.rect.collidepoint(mouse_pos):
@@ -147,39 +163,21 @@ while True:
                 deleting = False  # Désactiver le mode suppression
                 current_x = 200  # Réinitialiser la position x
 
-            elif resizing_button:
-                resizing_button = None  # Désactiver le mode redimensionnement
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Bouton gauche de la souris
-                mouse_pos = pygame.mouse.get_pos()
-                for button in placed_buttons:
-                    if button.rect.collidepoint(mouse_pos):
-                        if button.image == do_image:
-                            placed_buttons.append(do_image)
-                            movement_sequence.append(player_speed)
-                        elif button.image == re_image:
-                            placed_buttons.append(re_image)
-                            movement_sequence.append(-player_speed)
-
-    if movement_sequence:
-        movement_distance += movement_sequence[0]
-        if abs(movement_distance) >= 100:
-            movement_distance = 0
-            movement_sequence.pop(0)  # Retirer le premier élément de la séquence
-        player_rect.x += movement_sequence[0]
+            # ...
 
     for button in placed_buttons:
-        if button.image == do_image:  # Si le bouton est "Do"
-            movement_distance += 5
-            if movement_distance >= 100:
-                movement_distance = 100
-            player_rect.x += 5
-        elif button.image == re_image:  # Si le bouton est "Ré"
-            movement_distance -= 5
-            if movement_distance <= -100:
-                movement_distance = -100
-            player_rect.x -= 5
+        if play_button_clicked:
+            # Seulement si le bouton "Play" a été cliqué, les boutons dans la bande noire influencent le mouvement du personnage
+            if button.image == do_image:  # Si le bouton est "Do"
+                movement_distance += player_speed
+                player_rect.x += player_speed
+                if movement_distance >= 100:
+                    movement_distance -= 100
+            elif button.image == re_image:  # Si le bouton est "Ré"
+                movement_distance -= player_speed
+                player_rect.x -= player_speed
+                if movement_distance <= -100:
+                    movement_distance += 100
 
     # Déplacement du joueur
     keys = pygame.key.get_pressed()
@@ -202,7 +200,6 @@ while True:
 
     screen.blit(background, (0, 0))
 
-
     # Dessiner le joueur
     screen.blit(player_image, player_rect)
 
@@ -210,6 +207,7 @@ while True:
     screen.blit(do_image, do_button_rect.topleft)
     screen.blit(re_image, re_button_rect.topleft)
     screen.blit(delete_image, delete_button_rect.topleft)  # Dessiner l'image du bouton Supprimer
+    screen.blit(play_image, play_button_rect.topleft)
 
     # Dessiner la bande noire en bas
     pygame.draw.rect(screen, BLACK, black_rect)
