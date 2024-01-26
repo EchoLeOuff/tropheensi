@@ -45,7 +45,7 @@ player_rect = player_image.get_rect()
 player_rect.center = (resolution[0] // 2, resolution[1] - player_rect.height - 50)  # 50 pixels au-dessus du bas
 
 # Définir la vitesse du joueur et la gravité pour le saut
-player_speed = 5
+player_speed = 50
 jump_speed = -10
 gravity = 1
 is_jumping = False
@@ -64,6 +64,10 @@ re_image = pygame.transform.scale(re_image, (50, 50))
 delete_image = pygame.image.load('assets/bin.png')
 delete_image = pygame.transform.scale(delete_image, (50, 50))
 
+# Charger l'image pour le bouton "Play"
+play_image = pygame.image.load('assets/play.png')
+play_image = pygame.transform.scale(play_image, (50, 50))
+
 # Position des boutons
 do_button_rect = do_image.get_rect()
 do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
@@ -73,6 +77,9 @@ re_button_rect.topleft = (resolution[0] - 100, resolution[1] - 80)
 
 delete_button_rect = delete_image.get_rect()
 delete_button_rect.topleft = (resolution[0] - 100, resolution[1] - 220)
+
+play_button_rect = play_image.get_rect()
+play_button_rect.topleft = (resolution[0] - 100, resolution[1] - 290)
 
 # Liste pour stocker les instances des boutons
 buttons = []
@@ -177,6 +184,19 @@ while True:
                 print("Bouton Supprimer cliqué")
                 deleting = not deleting  # Inverser l'état du mode suppression
 
+            elif play_button_rect.collidepoint(mouse_pos):
+                print("Bouton Play cliqué")
+                # Exécuter la séquence de jeu en fonction des blocs musicaux placés
+                current_node = placed_buttons_head
+                while current_node:
+                    if isinstance(current_node.button, Do):
+                        # Action pour le bloc "Do" (avancer de 5 pixels)
+                        player_rect.x += player_speed
+                    elif isinstance(current_node.button, Re):
+                        # Action pour le bloc "Re" (saute)
+                        player_rect.y += jump_speed
+                    current_node = current_node.next
+
             # Vérifier si le clic a eu lieu sur un bouton déjà placé dans la bande noire
             current_node = placed_buttons_head
             while current_node:
@@ -277,7 +297,6 @@ while True:
                 deleting = False  # Désactiver le mode suppression
                 current_x = 10  # Réinitialiser la position x
 
-
     # Effacer l'écran
     screen.blit(background, (0, 0))
 
@@ -287,7 +306,8 @@ while True:
     # Dessiner les boutons
     screen.blit(do_image, do_button_rect.topleft)
     screen.blit(re_image, re_button_rect.topleft)
-    screen.blit(delete_image, delete_button_rect.topleft)  # Dessiner l'image du bouton Supprimer
+    screen.blit(delete_image, delete_button_rect.topleft)
+    screen.blit(play_image, play_button_rect.topleft)  # Dessiner le bouton "Play"
 
     # Dessiner la bande noire en bas
     pygame.draw.rect(screen, BLACK, black_rect)
