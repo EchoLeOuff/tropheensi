@@ -89,6 +89,9 @@ movement_distance = 0
 # Booléen pour savoir si le bouton "Play" a été cliqué
 play_button_clicked = False
 
+# Variable pour suivre l'index du bloc en cours d'exécution
+n = 0
+
 # Boucle de jeu
 clock = pygame.time.Clock()
 
@@ -168,17 +171,21 @@ while True:
     for button in placed_buttons:
         if play_button_clicked:
             # Seulement si le bouton "Play" a été cliqué, les boutons dans la bande noire influencent le mouvement du personnage
-            if button.image == do_image:  # Si le bouton est "Do"
-                movement_distance += player_speed
-                player_rect.x += player_speed
-                if movement_distance >= 100:
-                    movement_distance -= 100
-            elif button.image == re_image:  # Si le bouton est "Ré"
-                movement_distance -= player_speed
-                player_rect.x -= player_speed
-                if movement_distance <= -100:
-                    movement_distance += 100
+            if n < len(placed_buttons):
+                current_button = placed_buttons[n]
 
+                if current_button.image == do_image:  # Si le bouton est "Do"
+                    movement_distance += player_speed
+                    player_rect.x += player_speed
+                    if movement_distance >= 100:
+                        movement_distance -= 100
+                        n += 1  # Passer au bloc suivant
+                elif current_button.image == re_image:  # Si le bouton est "Ré"
+                    movement_distance -= player_speed
+                    player_rect.x -= player_speed
+                    if movement_distance <= -100:
+                        movement_distance += 100
+                        n += 1  # Passer au bloc suivant
     # Déplacement du joueur
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT] and player_rect.left > 0:
