@@ -13,7 +13,7 @@ class Do(pygame.sprite.Sprite):
         self.rect = rect
 
     def __repr__(self):
-        return f"Do(rect={self.rect.topleft})"
+        return "Do(rect={self.rect.topleft})"
 
 class Re(pygame.sprite.Sprite):
     def __init__(self, image, rect):
@@ -22,7 +22,7 @@ class Re(pygame.sprite.Sprite):
         self.rect = rect
 
     def __repr__(self):
-        return f"Re(rect={self.rect.topleft})"
+        return "Re(rect={self.rect.topleft})"
 
 # Initialisation de Pygame
 pygame.init()
@@ -89,6 +89,9 @@ moving_button = None
 # Booléen pour savoir si le bouton est en cours de suppression
 deleting = False
 
+# Booléen pour savoir si la liste doit être affichée
+display_list = False
+
 # Fonction pour ajouter un bouton à la liste chaînée
 def add_button_to_list(button, head):
     new_node = Node(button)
@@ -131,10 +134,14 @@ def ajouter_dans_la_liste(button, position, head):
 
 # Fonction pour afficher le contenu de la liste chaînée
 def afficher_liste(head):
-    current_node = head
-    while current_node:
-        print(current_node.button)
-        current_node = current_node.next
+    if isinstance(head, list):
+        for element in head:
+            print("Liste des boutons placés", element)
+    else:
+        current_node = head
+        while current_node:
+            print("Liste des boutons placés", current_node.button)
+            current_node = current_node.next
 
 # Boucle de jeu
 clock = pygame.time.Clock()
@@ -219,6 +226,9 @@ while True:
                             current_x += current_node.button.rect.width + 10
                             current_node = current_node.next
 
+                        # Activer l'affichage de la liste
+                        display_list = True
+
                 else:
                     print("Le bouton doit être placé dans la bande noire")
                     # Vérifier si le bouton n'est pas déjà présent dans la liste chaînée
@@ -251,6 +261,9 @@ while True:
                             current_x += current_node.button.rect.width + 10
                             current_node = current_node.next
 
+                        # Activer l'affichage de la liste
+                        display_list = True
+
                 # Supprimer le bouton de la liste buttons s'il appartient à cette liste
                 if moving_button in buttons:
                     buttons.remove(moving_button)
@@ -263,6 +276,7 @@ while True:
                 print("Toutes les instances de blocs musicaux ont été supprimées")
                 deleting = False  # Désactiver le mode suppression
                 current_x = 10  # Réinitialiser la position x
+
 
     # Effacer l'écran
     screen.blit(background, (0, 0))
@@ -297,6 +311,11 @@ while True:
 
     # Mettre à jour l'écran
     pygame.display.flip()
+
+    # Afficher la liste seulement lorsque display_list est True
+    if display_list:
+        afficher_liste(placed_buttons_head)
+        display_list = False  # Désactiver l'affichage de la liste après l'avoir affichée une fois
 
     # Limiter la fréquence d'images
     clock.tick(60)
