@@ -121,7 +121,7 @@ while True:
 
 
             # Collision horizontale
-            elif rect_x + rect_largeur > obstacle.rect.left and rect_personnage.left < obstacle.rect.left:
+            if rect_x + rect_largeur > obstacle.rect.left and rect_personnage.left < obstacle.rect.left:
                 # Collision à droite de l'obstacle
                 rect_x = obstacle.rect.left - rect_largeur
             elif rect_personnage.right > obstacle.rect.right and rect_x < obstacle.rect.right:
