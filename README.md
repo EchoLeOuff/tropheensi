@@ -14,6 +14,8 @@ Dernière mise à jour : 28/01/2024
 
 26/01 : système de stockage des boutons (liste) changés afin d’utiliser une liste chainée. Insertion fonctionnelle. L’insertion entre 2 blocs musicaux fonctionne. Ajout d’un bouton play qui déplace le personnage en fonction de la position des blocs dans la playlist.
 
+La version à jour du projet est "Stradius v0.1"
+
 To do list :
 -	Pouvoir modifier l’ordre des blocs musicaux
 -	Gérer complètement les collisions et les sauts
