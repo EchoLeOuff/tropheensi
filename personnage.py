@@ -16,7 +16,7 @@ VERT = (0, 255, 0)
 
 # Initialisation des paramètres du personnage
 rect_largeur, rect_hauteur = 50, 50
-rect_x, rect_y = 0, hauteur - rect_hauteur
+rect_x, rect_y = 0, 300
 vitesse_laterale = 0
 vitesse_saut = -10
 vitesse_verticale = 0
@@ -99,34 +99,38 @@ while True:
     else:
         vitesse_verticale = 0  # Arrêter la gravité si sur un obstacle
 
-    # Mettre à jour la position verticale du personnage
-    rect_y += vitesse_verticale
-
     # Assurez-vous que le personnage ne passe pas sous le sol
     if rect_y >= sol_y - rect_hauteur:
         rect_y = sol_y - rect_hauteur
         saut_en_cours = False
         vitesse_verticale = 0
 
+    # Mettre à jour la position verticale du personnage
+    rect_y += vitesse_verticale
+    rect_personnage = pygame.Rect(rect_x, rect_y, rect_largeur, rect_hauteur)
+
     # Vérification des collisions avec les obstacles
     for obstacle in obstacles:
         if rect_personnage.colliderect(obstacle.rect):
-            # Collision verticale
+            # Collision par le haut (atterrissage sur l'obstacle)
+            if vitesse_verticale > 0 and rect_personnage.bottom >= obstacle.rect.top and rect_personnage.top < obstacle.rect.top:
+                rect_y = obstacle.rect.top - rect_hauteur
+                vitesse_verticale = 0
+                saut_en_cours = False
+                sur_obstacle = True
 
+            else :
+            # Collision latérale
+                if rect_personnage.right >= obstacle.rect.left and rect_personnage.left < obstacle.rect.left:
+                    rect_x = obstacle.rect.left - rect_largeur  # Collision à droite de l'obstacle
+                elif rect_personnage.left <= obstacle.rect.right and rect_personnage.right > obstacle.rect.right:
+                    rect_x = obstacle.rect.right  # Collision à gauche de l'obstacle
 
-
-
-
-
-
-
-            # Collision horizontale
-            if rect_x + rect_largeur > obstacle.rect.left and rect_personnage.left < obstacle.rect.left:
-                # Collision à droite de l'obstacle
-                rect_x = obstacle.rect.left - rect_largeur
-            elif rect_personnage.right > obstacle.rect.right and rect_x < obstacle.rect.right:
-                # Collision à gauche de l'obstacle
-                rect_x = obstacle.rect.right
+                else :
+                    # Collision par le bas (tête contre le bas de l'obstacle)
+                    if vitesse_verticale < 0 and rect_personnage.top <= obstacle.rect.bottom and rect_personnage.bottom > obstacle.rect.bottom:
+                        rect_y = obstacle.rect.bottom
+                        vitesse_verticale = 0
 
     # Mise à jour de l'écran
     ecran.fill(NOIR)
