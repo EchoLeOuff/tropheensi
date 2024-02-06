@@ -24,3 +24,6 @@ To do list :
 -caméras position joueur Vincent
 -rajouter des ennemies on verra 
 -(sons)
+
+
+https://fr.wikibooks.org/wiki/Pygame/D%C3%A9placer_une_image#:~:text=Pour%20positionner%20un%20objet%20sur,de%20pixels%20vers%20le%20bas.
