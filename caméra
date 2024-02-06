@@ -1,0 +1,85 @@
+import pygame
+import sys
+
+# Initialisation de Pygame
+pygame.init()
+
+# Paramètres du jeu
+largeur_ecran = 800
+hauteur_ecran = 600
+resolution = (largeur_ecran, hauteur_ecran)
+camera_speed = 5
+
+# Couleurs
+blanc = (255, 255, 255)
+
+# Création de l'écran
+ecran = pygame.display.set_mode(resolution)
+pygame.display.set_caption("Jeu de Plateforme")
+
+# Chargement du fond
+background = pygame.image.load('assets/bg.png')
+background = pygame.transform.scale(background, resolution)
+
+# Chargement du personnage
+personnage = pygame.Surface((50, 50))
+personnage.fill((255, 0, 0))
+rect_personnage = personnage.get_rect()
+rect_personnage.topleft = (100, hauteur_ecran - 50)
+
+# Variables de mouvement du personnage
+vitesse_x = 5
+vitesse_y = 0
+gravite = 1
+saut = -15
+est_en_saut = False
+
+# Zone invisible pour déplacer la caméra
+zone_invisible = pygame.Rect(200, 200, 400, 600)
+
+# Position de la caméra
+camera = pygame.Rect(0, 0, largeur_ecran, hauteur_ecran)
+
+# Boucle de jeu
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    touches = pygame.key.get_pressed()
+
+    # Déplacement du personnage
+    if touches[pygame.K_LEFT] and rect_personnage.left > 0:
+        rect_personnage.x -= vitesse_x
+    if touches[pygame.K_RIGHT] and rect_personnage.right < largeur_ecran:
+        rect_personnage.x += vitesse_x
+
+    # Gestion du saut
+    if not est_en_saut:
+        if touches[pygame.K_SPACE]:
+            vitesse_y = saut
+            est_en_saut = True
+    else:
+        vitesse_y += gravite
+        rect_personnage.y += vitesse_y
+
+        # Arrêter le saut lorsque le personnage touche le sol
+        if rect_personnage.y >= hauteur_ecran - 50:
+            rect_personnage.y = hauteur_ecran - 50
+            est_en_saut = False
+            vitesse_y = 0
+
+    # Mise à jour de la position de la caméra uniquement si le personnage sort de la zone invisible
+    if not zone_invisible.colliderect(rect_personnage):
+        camera.x += (rect_personnage.x - camera.x - largeur_ecran // 2 + 25) / camera_speed
+        camera.y += (rect_personnage.y - camera.y - hauteur_ecran // 2 + 25) / camera_speed
+
+    # Rafraîchir l'écran avec le fond
+    ecran.blit(background, (0, 0))
+    ecran.blit(personnage, (rect_personnage.x - camera.x, rect_personnage.y - camera.y))
+    pygame.draw.rect(ecran, (0, 255, 0), zone_invisible, 2)  # Dessiner la zone invisible
+    pygame.display.flip()
+
+    # Limiter la vitesse de rafraîchissement de l'écran
+    pygame.time.Clock().tick(60)
