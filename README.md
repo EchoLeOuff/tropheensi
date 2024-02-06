@@ -17,10 +17,10 @@ Dernière mise à jour : 28/01/2024
 La version à jour du projet est "Stradius v0.1"
 
 To do list :
--	Pouvoir modifier l’ordre des blocs musicaux
--	Gérer complètement les collisions et les sauts
--	Rajouter les notes de musique lorsque le bouton play est sélectionné
--	Avoir un niveau complet 
--	Déplacement de l’écran en fonction de l’avancement du niveau
-
-
+-finir le rangement Vincent 
+-ajouter les collisions hugo
+-mouvements hugo
+-blocs musicaux & play enzo
+-caméras position joueur Vincent
+-rajouter des ennemies on verra 
+-(sons)
