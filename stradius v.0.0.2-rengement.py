@@ -8,27 +8,42 @@ VERTICAL_SPEED = 0
 IS_JUMPING = False
 
 class Mega_class:
-    def __init__(self)
+    def __init__(self):
+        pass
+
 
 class Node:
     def __init__(self, button):
         self.button = button
         self.next = None
 
-class Button:
+class Button_fixe(pygame.sprite.Sprite):
+    def __init__(self, img, pos = None):
+        pygame.sprite.Sprite.__init__(self)
+        image = pygame.image.load(img)
+        image = pygame.transform.scale(image, (50, 50))
+        self.image = image
+        self.rect = image.get_rect()
+        self.pos = pos
+
+    def affichage(self):
+        if self.pos is not None:
+            screen.blit(self.image, self.pos)
+
+class Button(Button_fixe, pygame.sprite.Sprite):
     def __init__(self, image):
+        pygame.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = image.get_rect()
 
 
-    def action(self, player):
-        pass
 
 class Do(Button):
     def __init__(self):
         image = pygame.image.load('assets/do.png')
         image = pygame.transform.scale(image, (50, 50))
         super().__init__(image)
+
 
     def action(self, player):
         player.rect.x += PLAYER_SPEED
@@ -53,7 +68,7 @@ class Play(Button):
         image = pygame.image.load('assets/play.png')
         image = pygame.transform.scale(image, (50, 50))
         super().__init__(image)
-
+        self.rect = image.get_rect()
 
 
     def action(self, player):
@@ -64,6 +79,7 @@ class Delete(Button):
         image = pygame.image.load('assets/bin.png')
         image = pygame.transform.scale(image, (50, 50))
         super().__init__(image)
+        self.rect = image.get_rect()
 
     def action(self, linked_list, button):
         linked_list.head = linked_list.remove_button_from_list(button, linked_list.head)
@@ -72,11 +88,13 @@ class Obstacle(pygame.sprite.Sprite):
     def __init__(self, rect):
         super().__init__()
         self.image = image
-        self.rect = rect
+        pass
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, speed, jump_speed, gravity):
         image = pygame.image.load('assets/player.png')
+        size = (50, 50)
+        image = pygame.transform.scale(image, size)
         super().__init__()
         self.image = image
         self.rect = image.get_rect()
@@ -86,6 +104,7 @@ class Player(pygame.sprite.Sprite):
         self.gravity = gravity
         self.vertical_speed = VERTICAL_SPEED
         self.is_jumping = IS_JUMPING
+
 
     def jump(self):
         if not self.is_jumping:
@@ -156,13 +175,6 @@ class ListeChainee:
                 player.rect.y += JUMP_SPEED
             current_node = current_node.next
 
-"""def ajouter_obstacles(obstacles, x, y, nombre):
-    for i in range(nombre):
-        obstacle = Obstacle(pygame.Surface((30, 30)), pygame.Rect(x, y, 30, 30))
-        obstacle.image.fill((0, 0, 255))
-        obstacles.add(obstacle)
-        x += 150  # Espace entre les obstacles"""
-
 pygame.init()
 
 resolution = (1080, 720)
@@ -173,37 +185,11 @@ background = pygame.image.load('assets/bg.png')
 background = pygame.transform.scale(background, resolution)
 
 BLACK = (0, 0, 0)
-"""
-do_image = pygame.image.load('assets/do.png')
-do_image = pygame.transform.scale(do_image, (50, 50))
 
-re_image = pygame.image.load('assets/re.png')
-re_image = pygame.transform.scale(re_image, (50, 50))
-
-delete_image = pygame.image.load('assets/bin.png')
-delete_image = pygame.transform.scale(delete_image, (50, 50))
-
-play_image = pygame.image.load('assets/play.png')
-play_image = pygame.transform.scale(play_image, (50, 50))
-
-do_button_rect = do_image.get_rect()
-do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
-
-re_button_rect = re_image.get_rect()
-re_button_rect.topleft = (resolution[0] - 100, resolution[1] - 80)
-
-delete_button_rect = delete_image.get_rect()
-delete_button_rect.topleft = (resolution[0] - 100, resolution[1] - 220)
-
-play_button_rect = play_image.get_rect()
-play_button_rect.topleft = (resolution[0] - 100, resolution[1] - 290)
-"""
 buttons = []
 obstacles = pygame.sprite.Group()
 
 placed_buttons_head = None
-
-#ajouter_obstacles(obstacles, 300, resolution[1] - 80, 3)
 
 black_rect = pygame.Rect(0, resolution[1] - 50, resolution[0], 50)
 
@@ -213,14 +199,16 @@ display_list = False
 is_playing = False
 
 liste_chainee = ListeChainee()
-player = Player(PLAYER_SPEED, JUMP_SPEED, GRAVITY)
-do = Do()
-re = Re()
-play = Play()
-delete = Delete()
+PLAYER = Player(PLAYER_SPEED, JUMP_SPEED, GRAVITY)
+DO = Button_fixe('assets/do.png',(980, 600))
+RE = Button_fixe('assets/re.png',(980, 540))
+PLAY = Button_fixe('assets/play.png',(980, 480))
+DELETE = Button_fixe('assets/trash.png',(980,420))
+print(DO.rect, RE.rect, PLAY.rect, DELETE.rect)
 
-mega_classe = Mega_classe()
 
+#mega_classe = Mega_classe()
+clock = pygame.time.Clock()
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -230,25 +218,25 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
 
-            if do_button_rect.collidepoint(mouse_pos):
+            if DO.rect.collidepoint(mouse_pos):
                 print("Bouton Do cliqué")
-                do_instance = Do(do_image, do_image.get_rect())
+                do_instance = Do()
                 do_instance.rect.topleft = mouse_pos
                 buttons.append(do_instance)
                 moving_button = do_instance
 
-            elif re_button_rect.collidepoint(mouse_pos):
+            elif RE.rect.collidepoint(mouse_pos):
                 print("Bouton Ré cliqué")
-                re_instance = Re(re_image, re_image.get_rect())
+                re_instance = Re(re.image, re.image.get_rect())
                 re_instance.rect.topleft = mouse_pos
                 buttons.append(re_instance)
                 moving_button = re_instance
 
-            elif delete_button_rect.collidepoint(mouse_pos):
+            elif DELETE.rect.collidepoint(mouse_pos):
                 print("Bouton Supprimer cliqué")
                 deleting = not deleting
 
-            elif play_button_rect.collidepoint(mouse_pos):
+            elif PLAY.rect.collidepoint(mouse_pos):
                 print("Bouton Play cliqué")
                 liste_chainee.executer_actions(player)
                 is_playing = True
@@ -339,21 +327,18 @@ while True:
     keys = pygame.key.get_pressed()
 
     if not is_playing:
-        player.update(keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
+        PLAYER.update(keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
     else:
-        player.update(False, False)
+        PLAYER.update(False, False)
 
     if keys[pygame.K_SPACE]:
-        player.jump()
+        PLAYER.jump()
 
-    screen.blit(background, (0, 0))
-    screen.blit(player.image, player.rect)
-
-    screen.blit(do.image, do.rect.topleft)
-    screen.blit(re.image, re.rect.topleft)
-    screen.blit(delete.image, delete.rect.topleft)
-    screen.blit(play.image, play.rect.topleft)
-
+    screen.blit(PLAYER.image, PLAYER.rect)
+    DO.affichage()
+    RE.affichage()
+    PLAY.affichage()
+    DELETE.affichage()
     pygame.draw.rect(screen, BLACK, black_rect)
 
     current_node = placed_buttons_head
