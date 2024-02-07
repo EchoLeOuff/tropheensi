@@ -16,7 +16,7 @@ VERT = (0, 255, 0)
 
 # Initialisation des paramètres du personnage
 rect_largeur, rect_hauteur = 50, 50
-rect_x, rect_y = 300, 300
+rect_x, rect_y = 0, hauteur - 20
 vitesse_laterale = 0
 vitesse_saut = -10
 vitesse_verticale = 0
@@ -37,9 +37,9 @@ class Obstacle:
         pygame.draw.rect(ecran, self.couleur, self.rect)
 
 obstacles = []
-obstacles.append(Obstacle(200, sol_y - 150, 150, 25, (255, 0, 0)))  # Un obstacle rouge
+obstacles.append(Obstacle(200, sol_y - 50, 150, 25, (255, 0, 0)))  # Un obstacle rouge
 obstacles.append(Obstacle(375, sol_y - 100, 150, 25, (255, 0, 0)))  # Un obstacle rouge
-obstacles.append(Obstacle(550, sol_y - 50, 150, 25, (255, 0, 0)))  # Un obstacle rouge
+obstacles.append(Obstacle(550, sol_y - 150, 150, 25, (255, 0, 0)))  # Un obstacle rouge
 
 # Boucle principale du jeu
 while True:
@@ -113,29 +113,31 @@ while True:
     for obstacle in obstacles:
         if rect_personnage.colliderect(obstacle.rect):
 
-            diff_top = obstacle.rect.bottom - rect_personnage.top
-            diff_bottom = rect_personnage.bottom - obstacle.rect.top
-            diff_right = rect_personnage.right - obstacle.rect.left
-            diff_left = obstacle.rect.right - rect_personnage.left
+            diff_top = obstacle.rect.bottom - rect_personnage.top if vitesse_verticale < 0 else 1000
+            diff_bottom = rect_personnage.bottom - obstacle.rect.top if vitesse_verticale > 0 else 1000
+            diff_left = obstacle.rect.right - rect_personnage.left if vitesse_laterale < 0 else 1000
+            diff_right = rect_personnage.right - obstacle.rect.left if vitesse_laterale > 0 else 1000
 
             m = min(diff_top, diff_bottom, diff_right, diff_left)
 
-            # Collision par le haut (atterrissage sur l'obstacle)
-            if m == diff_bottom:
-                rect_y = obstacle.rect.top - rect_hauteur
-                vitesse_verticale = 0
-                saut_en_cours = False
-                sur_obstacle = True
+            # Collision à gauche de l'obstacle
+            if m == diff_right:
+                rect_x = obstacle.rect.left - rect_largeur
 
-            elif m == diff_right:
-                    rect_x = obstacle.rect.left - rect_largeur  # Collision à gauche de l'obstacle
-
+            # Collision à droite de l'obstacle
             elif m == diff_left:
-                    rect_x = obstacle.rect.right  # Collision à droite de l'obstacle
+                rect_x = obstacle.rect.right
 
+            else :
+                # Collision par le haut de l'obstacle
+                if m == diff_bottom:
+                    rect_y = obstacle.rect.top - rect_hauteur
+                    vitesse_verticale = 0
+                    saut_en_cours = False
+                    sur_obstacle = True
 
-
-            elif m == diff_top:
+                # Collision par le bas de l'obstacle
+                elif m == diff_top:
                         rect_y = obstacle.rect.bottom
                         vitesse_verticale = 0
 
@@ -147,5 +149,4 @@ while True:
         obstacle.afficher(ecran)
     pygame.display.flip()
     pygame.time.Clock().tick(60)  # Limite à 60 FPS
-
 
