@@ -15,6 +15,7 @@ class Node:
     def __init__(self, button):
         self.button = button
         self.next = None
+        self.prev = None
 
 class Button_fixe(pygame.sprite.Sprite):
     def __init__(self, img, pos = None):
@@ -36,12 +37,15 @@ class Button(Button_fixe, pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = image.get_rect()
+        self.pos_x = image.get_rect()[0]
+        self.pos_y = image.get_rect()[1]
 
 class Do(Button):
     def __init__(self):
         image = pygame.image.load('assets/do.png')
         image = pygame.transform.scale(image, (50, 50))
         super().__init__(image)
+
 
     def action(self, player):
         player.rect.x += PLAYER_SPEED
@@ -102,44 +106,38 @@ class ListeChainee:
     def __init__(self):
         self.head = None
 
-    def ajouter_dans_la_liste(self, button, position):
-        new_node = Node(button)
-
+    def insert(self, btn):
+        new_node = Node(btn)
+        current = self.head
+        temp = new_node.next
         if not self.head:
             self.head = new_node
             return
-
-        current = self.head
-        while current.next:
+        while current.next  is not None:
+            print("oui")
+            if btn.pos_x < current.next.button.pos_x:
+                new_node = current.next
+                current.next = new_node
+                print("a")
+                return
+            if current.next == None:
+                current.next = new_node
+                print("c")
+                return
+            if btn.pos_x < self.head.button.pos_x:
+                new_node.next = self.head
+                print("b")
+                return
             current = current.next
-
-        current.next = new_node
-
-    def insert_between(self, button_to_insert, button_before, button_after):
-        # Créer un nouveau nœud avec le bouton à insérer
-        new_node = Node(button_to_insert)
-
-        # Parcourir la liste pour trouver le nœud correspondant au bouton avant
-        current = self.head
-        while current:
-            if current.button == button_before:
-                break
-            current = current.next
-        if not current:
-            return  # Si le bouton avant n'est pas dans la liste, ne rien faire
-
-        # Insérer le nouveau nœud après le nœud correspondant au bouton avant
-        new_node.next = current.next
-        current.next = new_node
-
-    def remove_button_from_list(self):
-        self.head = None
 
     def afficher_liste(self):
         current_node = self.head
         while current_node:
             print("Liste des boutons placés ",current_node.button)
             current_node = current_node.next
+
+    def remove_button_from_list(self):
+        self.head = None
 
     def executer_actions(self, player):
         current_node = self.head
@@ -152,7 +150,7 @@ class ListeChainee:
 
     def affichage(self):
         current_node = self.head
-        current_x = 200  # Position horizontale de départ des boutons dans la bande noire
+        current_x = 50  # Position horizontale de départ des boutons dans la bande noire
         while current_node:
             current_x += current_node.button.rect.width + 10
             screen.blit(current_node.button.image, (current_x, black_rect.top))
@@ -178,7 +176,7 @@ def actualiser():
     DELETE.rect.topleft = DELETE.pos
 
 
-
+insert_index = 0
 pygame.init()
 
 resolution = (1080, 720)
@@ -247,6 +245,7 @@ while True:
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if moving_button:
+                print(moving_button)
                 if black_rect.colliderect(moving_button.rect):
                     current_node = placed_buttons_head
                     while current_node:
@@ -262,47 +261,17 @@ while True:
                             if moving_button.rect.centerx < current_node.button.rect.centerx:
                                 break
                             current_node = current_node.next
-                            insert_index += 1
 
-                        liste_chainee.ajouter_dans_la_liste(moving_button, insert_index)
+                        liste_chainee.insert(moving_button)
 
-                        current_x = 200
+                        current_x = 50
                         current_node = placed_buttons_head
                         while current_node:
                             current_node.button.rect.topleft = (current_x, black_rect.top)
                             current_x += current_node.button.rect.width + 10
                             current_node = current_node.next
 
-                        display_list = True
-
-                else:
-                    is_already_placed = False
-                    current_node = placed_buttons_head
-                    while current_node:
-                        if current_node.button == moving_button:
-                            is_already_placed = True
-                            break
-                        current_node = current_node.next
-
-                    if not is_already_placed:
-                        insert_index = 0
-                        current_node = placed_buttons_head
-                        while current_node:
-                            if moving_button.rect.centerx < current_node.button.rect.centerx:
-                                break
-                            current_node = current_node.next
-                            insert_index += 1
-
-                        liste_chainee.ajouter_dans_la_liste(moving_button, insert_index)
-
-                        current_x = 200
-                        current_node = placed_buttons_head
-                        while current_node:
-                            current_node.button.rect.topleft = (current_x, black_rect.top)
-                            current_x += current_node.button.rect.width + 10
-                            current_node = current_node.next
-
-                        display_list = True
+                display_list = True
 
                 if moving_button in buttons:
                     buttons.remove(moving_button)
