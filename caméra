@@ -4,125 +4,78 @@ import sys
 # Initialisation de Pygame
 pygame.init()
 
-# Paramètres de la fenêtre
-largeur, hauteur = 800, 600
-ecran = pygame.display.set_mode((largeur, hauteur))
-pygame.display.set_caption('Fond qui bouge avec un sprite')
-
-# Couleurs
-NOIR = (0, 0, 0)
-BLANC = (255, 255, 255)
-
-# Charger l'image de fond
+# Définition de la résolution de l'écran
 resolution = (1080, 720)
-fond_original = pygame.image.load('assets/bg.png')
-fond_original = pygame.transform.scale(fond_original, resolution)
-fond_rect_original = fond_original.get_rect()
+screen = pygame.display.set_mode(resolution)
+pygame.display.set_caption("Mon Super Jeu")
 
-# Dupliquer le fond
-fond_copie = fond_original.copy()
-fond_rect_copie = fond_copie.get_rect()
-fond_rect_copie.x = largeur
+# Chargement et mise à l'échelle de l'image de fond
+background = pygame.image.load('assets/bg.png')
+background = pygame.transform.scale(background, resolution)
 
-# Zone de suivi
-zone_suivi = pygame.Rect(largeur // 8, hauteur // 8, 3 * largeur // 4, 3 * hauteur // 4)
+# Définition des couleurs
+white = (255, 255, 255)
 
-# Classe pour le sprite
-class Sprite(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill((255, 0, 0))  # Rouge pour le sprite (vous pouvez remplacer cela par votre propre image)
-        self.rect = self.image.get_rect()
-        self.rect.center = (largeur // 2, hauteur // 2)
-        self.vitesse = 5  # Vitesse de déplacement du sprite
+# Définition des caractéristiques du personnage
+player_width = 50
+player_height = 50
+player_x = resolution[0] // 2 - player_width // 2
+player_y = resolution[1] - player_height
+player_speed = 5
+jump_height = 10
+gravity = 1
+camera_speed = 5
+camera_x = 1080
 
-    def update(self):
-        touches = pygame.key.get_pressed()
-        if touches[pygame.K_a]:  # Touche A
-            self.rect.x -= self.vitesse
-        if touches[pygame.K_d]:  # Touche D
-            self.rect.x += self.vitesse
-        if touches[pygame.K_w]:  # Touche W
-            self.rect.y -= self.vitesse
-        if touches[pygame.K_s]:  # Touche S
-            self.rect.y += self.vitesse
+# Définition des variables pour la génération dynamique du fond
+background_width = background.get_width()
+background_x = 0
 
-# Créer une instance du sprite
-sprite = Sprite()
+# Boucle de jeu
+clock = pygame.time.Clock()
 
-# Groupe de sprites
-tous_les_sprites = pygame.sprite.Group()
-tous_les_sprites.add(sprite)
-
-# Suivi de la caméra
-suivi_camera = True
-vitesse_camera = sprite.vitesse  # Nouvelle variable pour la vitesse de la caméra
-
-# Boucle principale du jeu
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-    # Mise à jour du sprite
-    tous_les_sprites.update()
+    keys = pygame.key.get_pressed()
 
-    if suivi_camera:
-        # Mettre à jour la position des fonds en fonction du mouvement du sprite
-        decalage_x = (largeur // 2) - sprite.rect.centerx
-        fond_rect_original.x += decalage_x
-        fond_rect_copie.x += decalage_x
+    # Déplacement du personnage
+    if keys[pygame.K_LEFT] and player_x > 0:
+        player_x -= player_speed
+    if keys[pygame.K_RIGHT] and player_x < resolution[0] - player_width:
+        player_x += player_speed
 
-        # Si l'original sort de l'écran, ramenez-le à droite de la copie
-        if fond_rect_original.right <= 0:
-            fond_rect_original.x = fond_rect_copie.x + largeur
+    # Saut du personnage
+    if keys[pygame.K_SPACE] and player_y == resolution[1] - player_height:
+        player_y -= jump_height
 
-        # Si la copie sort de l'écran, ramenez-la à droite de l'original
-        if fond_rect_copie.right <= 0:
-            fond_rect_copie.x = fond_rect_original.x + largeur
+    # Application de la gravité
+    if player_y < resolution[1] - player_height:
+        player_y += gravity0
 
-        # Si l'original sort de l'écran à gauche, ramenez-le à droite de la copie
-        if fond_rect_original.left >= largeur:
-            fond_rect_original.x = fond_rect_copie.x - largeur
+    # Génération dynamique du fond
+    if player_x > 800 :
+        background_x -= player_speed
+    elif player_x <200:
+        background_x += player_speed
 
-        # Si la copie sort de l'écran à gauche, ramenez-la à droite de l'original
-        if fond_rect_copie.left >= largeur:
-            fond_rect_copie.x = fond_rect_original.x - largeur
+    if background_x < -background_width:
+        background_x += background_width
+    elif background_x > -background_width:
+        background_x -= background_width
 
-        # Ajuster la position de la caméra en fonction du sprite et de la zone de suivi
-        if not zone_suivi.colliderect(sprite.rect):
-            diff_x = sprite.rect.centerx - zone_suivi.centerx
-            diff_y = sprite.rect.centery - zone_suivi.centery
-            zone_suivi.x += diff_x
-            zone_suivi.y += diff_y
-            fond_rect_original.x += diff_x
-            fond_rect_copie.x += diff_x
-            fond_rect_original.y += diff_y
-            fond_rect_copie.y += diff_y
+    # Affichage du fond
+    screen.blit(background, (background_x, 0))
+    screen.blit(background, (background_x + background_width, 0))
 
-    # Effacer l'écran
-    ecran.fill(NOIR)
-
-    # Afficher les fonds
-    ecran.blit(fond_original, fond_rect_original)
-    ecran.blit(fond_copie, fond_rect_copie)
-
-    # Afficher le sprite
-    tous_les_sprites.draw(ecran)
-
-    # Dessiner le rectangle de suivi
-    pygame.draw.rect(ecran, BLANC, zone_suivi, 2)
-
-    # Vérifier si le sprite touche les bords du rectangle de suivi
-    if zone_suivi.collidepoint(sprite.rect.topleft) or \
-       zone_suivi.collidepoint(sprite.rect.topright) or \
-       zone_suivi.collidepoint(sprite.rect.bottomleft) or \
-       zone_suivi.collidepoint(sprite.rect.bottomright):
-        suivi_camera = True
-    else:
-        suivi_camera = False
+    # Affichage du personnage
+    pygame.draw.rect(screen, white, (player_x, player_y, player_width, player_height))
 
     # Mise à jour de l'écran
     pygame.display.flip()
+
+    # Limite de vitesse de la boucle de jeu
+    clock.tick(60)
