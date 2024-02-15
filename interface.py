@@ -1,257 +1,231 @@
 import pygame
 import sys
 
+# Constantes pour le joueur
+PLAYER_SPEED = 5
+JUMP_SPEED = -15
+GRAVITY = 1
+VERTICAL_SPEED = 5
+IS_JUMPING = False
+
+class Mega_class:
+    def __init__(self):
+        pass
+
 class Node:
     def __init__(self, button):
         self.button = button
         self.next = None
 
-class Do(pygame.sprite.Sprite):
-    def __init__(self, image, rect):
-        super().__init__()
+class Button_fixe(pygame.sprite.Sprite):
+    def __init__(self, img, pos=None):
+        pygame.sprite.Sprite.__init__(self)
+        image = pygame.image.load(img)
+        image = pygame.transform.scale(image, (50, 50))
         self.image = image
-        self.rect = rect
+        self.rect = image.get_rect()
+        self.pos = pos
+
+    def affichage(self):
+        if self.pos is not None:
+            screen.blit(self.image, self.pos)
+
+class Button(Button_fixe, pygame.sprite.Sprite):
+    def __init__(self, image):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = image
+        self.rect = image.get_rect()
+        self.pos_x = image.get_rect()[0]
+        self.pos_y = image.get_rect()[1]
+
+class Do(Button):
+    def __init__(self):
+        image = pygame.image.load('assets/do.png')
+        image = pygame.transform.scale(image, (50, 50))
+        super().__init__(image)
+
+    def action(self, player):
+        player.rect.x += PLAYER_SPEED
 
     def __repr__(self):
         return "Do(rect={self.rect.topleft})"
 
-class Re(pygame.sprite.Sprite):
-    def __init__(self, image, rect):
-        super().__init__()
-        self.image = image
-        self.rect = rect
+class Re(Button):
+    def __init__(self):
+        image = pygame.image.load('assets/re.png')
+        image = pygame.transform.scale(image, (50, 50))
+        super().__init__(image)
+
+    def action(self, player):
+        player.rect.y += JUMP_SPEED
 
     def __repr__(self):
         return "Re(rect={self.rect.topleft})"
 
-# Initialisation de Pygame
+class Player(pygame.sprite.Sprite):
+    def __init__(self, speed, jump_speed, gravity):
+        image = pygame.image.load('assets/player.png')
+        size = (50, 50)
+        image = pygame.transform.scale(image, size)
+        super().__init__()
+        self.image = image
+        self.rect = image.get_rect()
+        self.rect.center = (resolution[0] // 2, resolution[1] - self.rect.height - 50)
+        self.speed = speed
+        self.jump_speed = jump_speed
+        self.gravity = gravity
+        self.vertical_speed = VERTICAL_SPEED
+        self.is_jumping = IS_JUMPING
+        self.pos_x = self.rect[0]
+        self.pos_y = self.rect[1]
+
+    def jump(self):
+        if not self.is_jumping:
+            self.vertical_speed = self.jump_speed
+            self.is_jumping = True
+
+    def update(self, move_left, move_right):
+        if move_left:
+            self.rect.x -= self.speed
+        if move_right:
+            self.rect.x += self.speed
+
+        self.vertical_speed += self.gravity
+        self.rect.y += self.vertical_speed
+
+        if self.rect.y > resolution[1] - self.rect.height - 50:
+            self.rect.y = resolution[1] - self.rect.height - 50
+            self.vertical_speed = 0
+            self.is_jumping = False
+
+class ListeChainee:
+    def __init__(self):
+        self.liste = []
+
+    def inserer(self, moving_button):
+        insert_index = 0
+        for button in self.liste:
+            if moving_button.pos_x < button.pos_x:
+                break
+            insert_index += 1
+        self.liste.insert(insert_index, moving_button)
+
+    def affichage(self, black_rect):
+        current_x = 10
+        for button in self.liste:
+            screen.blit(button.image, (current_x, black_rect.top))
+            button.pos = (current_x, black_rect.top)
+            current_x += button.rect.width + 10
+
+    def afficher_liste(self):
+        print(self.liste)
+
+class Bg(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        image = pygame.image.load('assets/bg2.png').convert()
+        self.image = image
+        self.pos_x = 0
+        self.pos_y = 0
+
+def actualiser():
+    # Actualiser la position du joueur en fonction de sa vitesse
+    PLAYER.rect.y += PLAYER.vertical_speed
+
+    # Actualiser la position des boutons en fonction de leurs positions
+    DO.rect.topleft = DO.pos
+    RE.rect.topleft = RE.pos
+    PLAY.rect.topleft = PLAY.pos
+    DELETE.rect.topleft = DELETE.pos
+
 pygame.init()
 
-# Définir la résolution de l'écran
 resolution = (1080, 720)
 screen = pygame.display.set_mode(resolution)
 pygame.display.set_caption("Mon Super Jeu")
 
-# Charger le fond
-background = pygame.image.load('assets/bg.png')
-background = pygame.transform.scale(background, resolution)
-
-# Charger le joueur (sprite)
-player_image = pygame.image.load('assets/player.png')
-player_image = pygame.transform.scale(player_image, (50, 50))  # Ajuster la taille du joueur
-player_rect = player_image.get_rect()
-
-# Définir les propriétés du joueur
-player_rect.center = (resolution[0] // 2, resolution[1] - player_rect.height - 50)  # 50 pixels au-dessus du bas
-
-# Définir la vitesse du joueur et la gravité pour le saut
-player_speed = 50
-jump_speed = -10
-gravity = 1
-is_jumping = False
-
-# Couleur noire
 BLACK = (0, 0, 0)
 
-# Charger les images pour les boutons "Do" et "Ré"
-do_image = pygame.image.load('assets/do.png')
-do_image = pygame.transform.scale(do_image, (50, 50))
-
-re_image = pygame.image.load('assets/re.png')
-re_image = pygame.transform.scale(re_image, (50, 50))
-
-# Charger l'image pour le bouton "Supprimer"
-delete_image = pygame.image.load('assets/bin.png')
-delete_image = pygame.transform.scale(delete_image, (50, 50))
-
-# Charger l'image pour le bouton "Play"
-play_image = pygame.image.load('assets/play.png')
-play_image = pygame.transform.scale(play_image, (50, 50))
-
-# Position des boutons
-do_button_rect = do_image.get_rect()
-do_button_rect.topleft = (resolution[0] - 100, resolution[1] - 150)
-
-re_button_rect = re_image.get_rect()
-re_button_rect.topleft = (resolution[0] - 100, resolution[1] - 80)
-
-delete_button_rect = delete_image.get_rect()
-delete_button_rect.topleft = (resolution[0] - 100, resolution[1] - 220)
-
-play_button_rect = play_image.get_rect()
-play_button_rect.topleft = (resolution[0] - 100, resolution[1] - 290)
-
-# Liste pour stocker les instances des boutons
 buttons = []
+obstacles = pygame.sprite.Group()
 
-# Liste chaînée pour stocker les instances des boutons placés dans la bande noire
 placed_buttons_head = None
 
-# Bande noire
 black_rect = pygame.Rect(0, resolution[1] - 50, resolution[0], 50)
 
-# Booléen pour savoir si le bouton est en cours de déplacement
 moving_button = None
-
-# Booléen pour savoir si le bouton est en cours de suppression
 deleting = False
-
-# Booléen pour savoir si la liste doit être affichée
 display_list = False
+is_playing = False
 
-# Fonction pour ajouter un bouton à la liste chaînée
-def add_button_to_list(button, head):
-    new_node = Node(button)
-    new_node.next = head
-    return new_node
+liste_chainee = ListeChainee()
+PLAYER = Player(PLAYER_SPEED, JUMP_SPEED, GRAVITY)
+DO = Button_fixe('assets/do.png', (980, 600))
+RE = Button_fixe('assets/re.png', (980, 540))
+PLAY = Button_fixe('assets/play.png', (980, 480))
+DELETE = Button_fixe('assets/bin.png', (980, 420))
+BG = Bg()
 
-# Fonction pour supprimer un bouton de la liste chaînée
-def remove_button_from_list(button, head):
-    prev = None
-    current = head
-    while current:
-        if current.button == button:
-            if prev:
-                prev.next = current.next
-            else:
-                head = current.next
-            return head
-        prev = current
-        current = current.next
-    return head
-
-# Fonction pour ajouter un bouton dans la liste chaînée à une position spécifique
-def ajouter_dans_la_liste(button, position, head):
-    new_node = Node(button)
-
-    if position == 0 or not head:
-        new_node.next = head
-        return new_node
-
-    current = head
-    for _ in range(position - 1):
-        if not current.next:
-            break
-        current = current.next
-
-    new_node.next = current.next
-    current.next = new_node
-
-    return head
-
-# Fonction pour afficher le contenu de la liste chaînée
-def afficher_liste(head):
-    if isinstance(head, list):
-        for element in head:
-            print("Liste des boutons placés", element)
-    else:
-        current_node = head
-        while current_node:
-            print("Liste des boutons placés", current_node.button)
-            current_node = current_node.next
-
-# Boucle de jeu
 clock = pygame.time.Clock()
-
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-        # Détecter les clics de souris
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
 
-            # Vérifier si le clic a eu lieu sur l'un des boutons
-            if do_button_rect.collidepoint(mouse_pos):
+            if DO.rect.collidepoint(mouse_pos):
                 print("Bouton Do cliqué")
-                # Créer une instance de "Do" avec l'image associée
-                do_instance = Do(do_image, do_image.get_rect())
+                do_instance = Do()
                 do_instance.rect.topleft = mouse_pos
                 buttons.append(do_instance)
-                moving_button = do_instance  # Définir le bouton en cours de déplacement
+                moving_button = do_instance
 
-            elif re_button_rect.collidepoint(mouse_pos):
+            elif RE.rect.collidepoint(mouse_pos):
                 print("Bouton Ré cliqué")
-                # Créer une instance de "Ré" avec l'image associée
-                re_instance = Re(re_image, re_image.get_rect())
+                re_instance = Re()
                 re_instance.rect.topleft = mouse_pos
                 buttons.append(re_instance)
-                moving_button = re_instance  # Définir le bouton en cours de déplacement
+                moving_button = re_instance
 
-            elif delete_button_rect.collidepoint(mouse_pos):
+            elif DELETE.rect.collidepoint(mouse_pos):
                 print("Bouton Supprimer cliqué")
-                deleting = not deleting  # Inverser l'état du mode suppression
+                deleting = not deleting
 
-            elif play_button_rect.collidepoint(mouse_pos):
+            elif PLAY.rect.collidepoint(mouse_pos):
                 print("Bouton Play cliqué")
-                # Exécuter la séquence de jeu en fonction des blocs musicaux placés
-                current_node = placed_buttons_head
-                while current_node:
-                    if isinstance(current_node.button, Do):
-                        # Action pour le bloc "Do" (avancer de 5 pixels)
-                        player_rect.x += player_speed
-                    elif isinstance(current_node.button, Re):
-                        # Action pour le bloc "Re" (saute)
-                        player_rect.y += jump_speed
-                    current_node = current_node.next
+                liste_chainee.executer_actions(PLAYER)
+                is_playing = True
 
-            # Vérifier si le clic a eu lieu sur un bouton déjà placé dans la bande noire
             current_node = placed_buttons_head
             while current_node:
                 if current_node.button.rect.collidepoint(mouse_pos):
                     print("Bouton placé cliqué")
                     if deleting:
-                        # Supprimer le bouton de la liste chaînée
-                        placed_buttons_head = remove_button_from_list(current_node.button, placed_buttons_head)
+                        placed_buttons_head = liste_chainee.remove_button_from_list(current_node.button, placed_buttons_head)
                         print("Bouton supprimé de la bande noire")
                     else:
-                        moving_button = current_node.button  # Définir le bouton en cours de déplacement
+                        moving_button = current_node.button
                     break
                 current_node = current_node.next
 
-        # Détecter le relâchement du clic de souris
         elif event.type == pygame.MOUSEBUTTONUP:
             if moving_button:
-                # Vérifier si le bouton est dans la bande noire
                 if black_rect.colliderect(moving_button.rect):
-                    # Vérifier si le bouton n'est pas déjà présent dans la liste chaînée
-                    is_already_placed = False
+                    liste_chainee.inserer(moving_button)
+
+                    current_x = 200
                     current_node = placed_buttons_head
                     while current_node:
-                        if current_node.button == moving_button:
-                            is_already_placed = True
-                            break
+                        current_node.button.rect.topleft = (current_x, black_rect.top)
+                        current_x += current_node.button.rect.width + 10
                         current_node = current_node.next
 
-                    if not is_already_placed:
-                        # Trouver la position d'insertion correcte
-                        insert_index = 0
-                        current_node = placed_buttons_head
-                        while current_node:
-                            if moving_button.rect.centerx < current_node.button.rect.centerx:
-                                break
-                            current_node = current_node.next
-                            insert_index += 1
-
-                        # Ajouter le bouton à la liste chaînée à la position d'insertion
-                        placed_buttons_head = ajouter_dans_la_liste(moving_button, insert_index, placed_buttons_head)
-
-                        # Redécaler les boutons à droite du bouton déplacé
-                        current_x = 200
-                        current_node = placed_buttons_head
-                        while current_node:
-                            current_node.button.rect.topleft = (current_x, black_rect.top)
-                            current_x += current_node.button.rect.width + 10
-                            current_node = current_node.next
-
-                        # Activer l'affichage de la liste
-                        display_list = True
+                    display_list = True
 
                 else:
-                    print("Le bouton doit être placé dans la bande noire")
-                    # Vérifier si le bouton n'est pas déjà présent dans la liste chaînée
                     is_already_placed = False
                     current_node = placed_buttons_head
                     while current_node:
@@ -261,7 +235,6 @@ while True:
                         current_node = current_node.next
 
                     if not is_already_placed:
-                        # Trouver la position d'insertion correcte à côté d'un autre bouton
                         insert_index = 0
                         current_node = placed_buttons_head
                         while current_node:
@@ -270,10 +243,8 @@ while True:
                             current_node = current_node.next
                             insert_index += 1
 
-                        # Ajouter le bouton à la liste chaînée à la position d'insertion
-                        placed_buttons_head = ajouter_dans_la_liste(moving_button, insert_index, placed_buttons_head)
+                        liste_chainee.inserer(moving_button)
 
-                        # Redécaler les boutons à droite du bouton déplacé
                         current_x = 200
                         current_node = placed_buttons_head
                         while current_node:
@@ -281,61 +252,60 @@ while True:
                             current_x += current_node.button.rect.width + 10
                             current_node = current_node.next
 
-                        # Activer l'affichage de la liste
                         display_list = True
 
-                # Supprimer le bouton de la liste buttons s'il appartient à cette liste
                 if moving_button in buttons:
                     buttons.remove(moving_button)
 
-                moving_button = None  # Réinitialiser le bouton en cours de déplacement
+                moving_button = None
 
             elif deleting:
-                # Supprimer toutes les instances de boutons placées
                 placed_buttons_head = None
                 print("Toutes les instances de blocs musicaux ont été supprimées")
-                deleting = False  # Désactiver le mode suppression
-                current_x = 10  # Réinitialiser la position x
+                deleting = False
+                current_x = 10
 
-    # Effacer l'écran
-    screen.blit(background, (0, 0))
+    keys = pygame.key.get_pressed()
 
-    # Dessiner le joueur
-    screen.blit(player_image, player_rect)
+    if not is_playing:
+        PLAYER.update(keys[pygame.K_LEFT], keys[pygame.K_RIGHT])
+    else:
+        PLAYER.update(False, False)
 
-    # Dessiner les boutons
-    screen.blit(do_image, do_button_rect.topleft)
-    screen.blit(re_image, re_button_rect.topleft)
-    screen.blit(delete_image, delete_button_rect.topleft)
-    screen.blit(play_image, play_button_rect.topleft)  # Dessiner le bouton "Play"
+    if keys[pygame.K_SPACE]:
+        PLAYER.jump()
 
-    # Dessiner la bande noire en bas
+    actualiser()
+    liste_chainee.affichage(black_rect)
+    screen.blit(BG.image, (BG.pos_x, BG.pos_y))
+    DO.affichage()
+    RE.affichage()
+    PLAY.affichage()
+    DELETE.affichage()
     pygame.draw.rect(screen, BLACK, black_rect)
+    screen.blit(PLAYER.image, PLAYER.rect)
 
-    # Dessiner les instances des boutons dans la bande noire
-    current_node = placed_buttons_head
-    while current_node:
-        screen.blit(current_node.button.image, current_node.button.rect.topleft)
-        current_node = current_node.next
-
-    # Dessiner le bouton en cours de déplacement
+    # Dessine les boutons en mouvement
     if moving_button:
         mouse_pos = pygame.mouse.get_pos()
         moving_button.rect.topleft = mouse_pos
         screen.blit(moving_button.image, moving_button.rect.topleft)
 
-    # Dessiner les instances des boutons et suivre le curseur de la souris
+    # Dessine les boutons qui ne sont ni en mouvement ni dans la liste
     for button in buttons:
         if button != moving_button and button not in placed_buttons_head:
             screen.blit(button.image, button.rect.topleft)
 
-    # Mettre à jour l'écran
+    # Dessine les boutons placés avec leurs positions mises à jour
+    current_node = placed_buttons_head
+    while current_node:
+        screen.blit(current_node.button.image, current_node.button.rect.topleft)
+        current_node = current_node.next
+
     pygame.display.flip()
 
-    # Afficher la liste seulement lorsque display_list est True
     if display_list:
-        afficher_liste(placed_buttons_head)
-        display_list = False  # Désactiver l'affichage de la liste après l'avoir affichée une fois
+        liste_chainee.afficher_liste()
+        display_list = False
 
-    # Limiter la fréquence d'images
     clock.tick(60)
