@@ -2,7 +2,7 @@ Cahier de bord projet de NSI
 
 Contexte : Nous créons un jeu de type platformer qui utilise une sécance musicale pour se déplacer.
 
-Dernière mise à jour : 28/01/2024
+Dernière mise à jour : 16/02/2024
 
 17/01 : création du fond, du personnage, gestion des déplacements avec le clavier et gestion de la gravité
 
@@ -17,11 +17,11 @@ Dernière mise à jour : 28/01/2024
 La version à jour du projet est "Stradius v0.1"
 
 To do list :
--finir le rangement Vincent 
--ajouter les collisions hugo
--mouvements hugo
--blocs musicaux & play enzo
--caméras position joueur Vincent
+-finir le rangement Vincent (quasi fini)
+-ajouter les collisions hugo (en cours)
+-mouvements hugo (?)
+-blocs musicaux & play enzo (fait)
+-caméras position joueur Vincent (en cours)
 -rajouter des ennemies on verra 
 -(sons)
 
